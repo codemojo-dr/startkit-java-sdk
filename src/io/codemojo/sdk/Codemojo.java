@@ -22,12 +22,9 @@ public class Codemojo {
 
     private CodemojoException exception;
 
-    public Codemojo() {
-    }
-
     /**
-     * @param client_token
-     * @param logged_in_user_id
+     * @param client_token Secret Token obtained from Codemojo
+     * @param logged_in_user_id Encoded user id
      */
     public Codemojo(String client_token, String logged_in_user_id) {
         this(client_token, logged_in_user_id, false);
@@ -110,7 +107,7 @@ public class Codemojo {
     /**
      * @param exception
      */
-    public void setException(CodemojoException exception) {
+    public void setExceptionHandler(CodemojoException exception) {
         this.exception = exception;
     }
 }

@@ -4,12 +4,15 @@ import io.codemojo.sdk.exceptions.InvalidArgumentsException;
 import io.codemojo.sdk.exceptions.SDKInitializationException;
 import io.codemojo.sdk.exceptions.SetupIncompleteException;
 import io.codemojo.sdk.facades.LoyaltyEvent;
-import io.codemojo.sdk.facades.ResponseAvailable;
+import io.codemojo.sdk.models.Loyalty;
+import io.codemojo.sdk.models.LoyaltySummary;
 import io.codemojo.sdk.network.ILoyalty;
 import io.codemojo.sdk.responses.ResponseLoyalty;
 import io.codemojo.sdk.responses.ResponseLoyaltyMaximumRedemption;
 import io.codemojo.sdk.responses.ResponseLoyaltySummary;
 import retrofit2.Call;
+
+import java.io.IOException;
 
 /**
  * Created by shoaib on 16/06/16.
@@ -37,46 +40,35 @@ public class LoyaltyService extends BaseService {
      * @param tag
      * @param platform
      * @param service
-     * @param callback
      */
-    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag, String platform, String service, final ResponseAvailable callback) {
+    public Loyalty addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
-            return;
+            return null;
         }
         final Call<ResponseLoyalty> response = loyaltyService.addLoyaltyPoints(customer_id, transaction, transaction_id, meta, tag, platform, service);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final ResponseLoyalty body = response.execute().body();
-                    if(body != null){
-                        switch (body.getCode()) {
-                            case -403:
-                                raiseException(new InvalidArgumentsException(body.getMessage()));
-                                break;
-                            case 400:
-                                raiseException(new SetupIncompleteException(body.getMessage()));
-                                break;
-                            case 200:
-                                if(notification != null && body.getResult().isTierUpgrade()) {
-                                    notification.newTierUpgrade(body.getResult().getTier());
-                                }
-                                moveTo(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.available(body.getResult());
-                                    }
-                                });
-                                break;
-                        }
+        ResponseLoyalty body = null;
+        try {
+            body = response.execute().body();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(body != null){
+            switch (body.getCode()) {
+                case -403:
+                    raiseException(new InvalidArgumentsException(body.getMessage()));
+                    break;
+                case 400:
+                    raiseException(new SetupIncompleteException(body.getMessage()));
+                    break;
+                case 200:
+                    if(notification != null && body.getResult().isTierUpgrade()) {
+                        notification.newTierUpgrade(body.getResult().getTier());
                     }
-                } catch (Exception ignored) {
-                    raiseException(ignored);
-                }
-
+                    return body.getResult();
             }
-        }).start();
+        }
+        return null;
     }
 
     /**
@@ -85,29 +77,26 @@ public class LoyaltyService extends BaseService {
      * @param transaction_id
      * @param meta
      * @param tag
-     * @param callback
      */
-    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag, ResponseAvailable callback) {
-        addLoyaltyPoints(customer_id, transaction, transaction_id, meta, tag, null, null, callback);
+    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag) {
+        addLoyaltyPoints(customer_id, transaction, transaction_id, meta, tag, null, null);
     }
 
     /**
      * @param customer_id
      * @param transaction
      * @param transaction_id
-     * @param callback
      */
-    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id, ResponseAvailable callback) {
-        addLoyaltyPoints(customer_id, transaction, transaction_id, null, null, null, null, callback);
+    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id) {
+        addLoyaltyPoints(customer_id, transaction, transaction_id, null, null, null, null);
     }
 
     /**
      * @param customer_id
      * @param transaction
-     * @param callback
      */
-    public void calculateLoyaltyPoints(String customer_id, float transaction, ResponseAvailable callback) {
-        calculateLoyaltyPoints(customer_id, transaction, null, null, callback);
+    public void calculateLoyaltyPoints(String customer_id, float transaction) {
+        calculateLoyaltyPoints(customer_id, transaction, null, null);
     }
 
     /**
@@ -115,51 +104,39 @@ public class LoyaltyService extends BaseService {
      * @param transaction
      * @param platform
      * @param service
-     * @param callback
      */
-    public void calculateLoyaltyPoints(String customer_id, float transaction, String platform, String service, final ResponseAvailable callback) {
+    public float calculateLoyaltyPoints(String customer_id, float transaction, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
-            return;
+            return 0;
         }
         final Call<ResponseLoyalty> response = loyaltyService.calculateLoyaltyPoints(customer_id, transaction, platform, service);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final ResponseLoyalty body = response.execute().body();
-                    if(body != null){
-                        switch (body.getCode()) {
-                            case -403:
-                                raiseException(new InvalidArgumentsException(body.getMessage()));
-                                break;
-                            case 400:
-                                raiseException(new SetupIncompleteException(body.getMessage()));
-                                break;
-                            case 200:
-                                moveTo(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.available(body.getResult().getAward());
-                                    }
-                                });
-                                break;
-                        }
-                    }
-                } catch (Exception ignored) {
-                    raiseException(ignored);
+        try {
+            final ResponseLoyalty body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case -403:
+                        raiseException(new InvalidArgumentsException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return body.getResult().getAward();
                 }
             }
-        }).start();
+        } catch (Exception ignored) {
+            raiseException(ignored);
+        }
+        return 0;
     }
 
     /**
      * @param customer_id
      * @param transaction
-     * @param callback
      */
-    public void maximumRedemption(String customer_id, float transaction, ResponseAvailable callback) {
-        maximumRedemption(customer_id, transaction, callback);
+    public void maximumRedemption(String customer_id, float transaction) {
+        maximumRedemption(customer_id, transaction);
     }
 
 
@@ -168,79 +145,55 @@ public class LoyaltyService extends BaseService {
      * @param transaction
      * @param platform
      * @param service
-     * @param callback
      */
-    public void maximumRedemption(String customer_id, float transaction, String platform, String service, final ResponseAvailable callback) {
+    public float maximumRedemption(String customer_id, float transaction, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
-            return;
+            return 0;
         }
         final Call<ResponseLoyaltyMaximumRedemption> response = loyaltyService.maximumRedemption(customer_id, transaction, platform, service);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final ResponseLoyaltyMaximumRedemption body = response.execute().body();
-                    if(body != null){
-                        switch (body.getCode()) {
-                            case -403:
-                                raiseException(new InvalidArgumentsException(body.getMessage()));
-                                break;
-                            case 400:
-                                raiseException(new SetupIncompleteException(body.getMessage()));
-                                break;
-                            case 200:
-                                moveTo(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.available(body.getResult());
-                                    }
-                                });
-                                break;
-                        }
-                    }
-                } catch (Exception ignored) {
-                    raiseException(ignored);
+        try {
+            final ResponseLoyaltyMaximumRedemption body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case -403:
+                        raiseException(new InvalidArgumentsException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return body.getResult();
                 }
             }
-        }).start();
+        } catch (Exception ignored) {
+            raiseException(ignored);
+        }
+        return 0;
     }
 
-    /**
-     * @param callback
-     */
-    public void getSummary(final ResponseAvailable callback) {
+    public LoyaltySummary getSummary() {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
-            return;
+            return null;
         }
         final Call<ResponseLoyaltySummary> response = loyaltyService.summary(getCustomerId());
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final ResponseLoyaltySummary body = response.execute().body();
-                    if(body != null){
-                        switch (body.getCode()) {
-                            case -403:
-                                raiseException(new InvalidArgumentsException(body.getMessage()));
-                                break;
-                            case 400:
-                                raiseException(new SetupIncompleteException(body.getMessage()));
-                                break;
-                            case 200:
-                                moveTo(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        callback.available(body.getSummary());
-                                    }
-                                });
-                                break;
-                        }
-                    }
-                } catch (Exception ignored) {
+        try {
+            final ResponseLoyaltySummary body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case -403:
+                        raiseException(new InvalidArgumentsException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return body.getSummary();
                 }
             }
-        }).start();
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 }

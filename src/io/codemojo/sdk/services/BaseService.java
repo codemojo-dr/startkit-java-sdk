@@ -10,7 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * Created by shoaib on 24/06/16.
  */
-public abstract class BaseService extends UIThread {
+public abstract class BaseService {
 
     private final String customer_id;
     private final Object service;
@@ -50,11 +50,6 @@ public abstract class BaseService extends UIThread {
         if(this.exception == null){
             return;
         }
-        moveTo(new Runnable() {
-            @Override
-            public void run() {
-                exception.onError(e);
-            }
-        });
+        exception.onError(e);
     }
 }

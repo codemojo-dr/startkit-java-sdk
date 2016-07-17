@@ -14,7 +14,7 @@ import java.util.concurrent.Semaphore;
 /**
  * Created by shoaib on 16/06/16.
  */
-public class AuthenticationService extends UIThread {
+public class AuthenticationService  {
 
     private Call<OAuth> response;
     IAccessToken oAuthService;
@@ -57,6 +57,9 @@ public class AuthenticationService extends UIThread {
         }
     }
 
+    /**
+     * @return int
+     */
     public int getEnvironment() {
         return environment;
     }

@@ -1,5 +1,7 @@
 package io.codemojo.sdk.models;
 
+import io.codemojo.sdk.facades.IPagination;
+
 import java.util.List;
 
 /**
@@ -17,6 +19,8 @@ public class PaginatedTransaction<T> {
     private int to;
     private List<T> data;
 
+    private IPagination<T> pages;
+
     public int getTotal() {
         return total;
     }
@@ -25,22 +29,13 @@ public class PaginatedTransaction<T> {
         return per_page;
     }
 
-    public int getCurrentPage() {
+    public int getCurrentPageNumber() {
         return current_page;
     }
 
-    public int getLastPage() {
+    public int getLastPageNumber() {
         return last_page;
     }
-
-    public String getNextPageUrl() {
-        return next_page_url;
-    }
-
-    public String getPrevPageUrl() {
-        return prev_page_url;
-    }
-
     public int getCurrentCollectionStart() {
         return from;
     }
@@ -51,5 +46,23 @@ public class PaginatedTransaction<T> {
 
     public List<T> getData() {
         return data;
+    }
+
+    public void setPaginationHandler(IPagination<T> pages) {
+        this.pages = pages;
+    }
+
+    public PaginatedTransaction<T> nextPage(){
+        if(pages != null){
+            return pages.next();
+        }
+        return null;
+    }
+
+    public PaginatedTransaction<T> prevPage(){
+        if(pages != null){
+            return pages.next();
+        }
+        return null;
     }
 }
