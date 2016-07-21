@@ -1,9 +1,11 @@
 package io.codemojo.sdk.services;
 
 import io.codemojo.sdk.exceptions.InvalidArgumentsException;
+import io.codemojo.sdk.exceptions.ResourceNotFoundException;
 import io.codemojo.sdk.exceptions.SDKInitializationException;
 import io.codemojo.sdk.exceptions.SetupIncompleteException;
 import io.codemojo.sdk.facades.LoyaltyEvent;
+import io.codemojo.sdk.models.GenericResponse;
 import io.codemojo.sdk.models.Loyalty;
 import io.codemojo.sdk.models.LoyaltySummary;
 import io.codemojo.sdk.network.ILoyalty;
@@ -172,12 +174,16 @@ public class LoyaltyService extends BaseService {
         return 0;
     }
 
-    public LoyaltySummary getSummary() {
+    /**
+     * @param customer_id
+     * @return
+     */
+    public LoyaltySummary getSummary(String customer_id) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return null;
         }
-        final Call<ResponseLoyaltySummary> response = loyaltyService.summary(getCustomerId());
+        final Call<ResponseLoyaltySummary> response = loyaltyService.summary(customer_id);
         try {
             final ResponseLoyaltySummary body = response.execute().body();
             if(body != null){
@@ -195,5 +201,122 @@ public class LoyaltyService extends BaseService {
         } catch (Exception ignored) {
         }
         return null;
+    }
+
+    /**
+     * @return
+     */
+    public LoyaltySummary getSummary() {
+        return getSummary(getCustomerId());
+    }
+
+    /**
+     * @param customer_id
+     * @param transaction_id
+     * @param redemption_value
+     * @param transaction_value
+     * @param meta
+     * @param tag
+     * @return
+     */
+    public boolean redeemPoints(String customer_id, String transaction_id, float redemption_value,
+                                        float transaction_value, String meta, String tag) {
+        return redeemPoints(customer_id, transaction_id, redemption_value, transaction_value, null, null, meta, tag);
+    }
+
+    /**
+     * @param customer_id
+     * @param transaction_id
+     * @param redemption_value
+     * @param transaction_value
+     * @param platform
+     * @param service_id
+     * @param meta
+     * @param tag
+     * @return
+     */
+    public boolean redeemPoints(String customer_id, String transaction_id, float redemption_value,
+                                        float transaction_value, String platform, String service_id, String meta, String tag){
+        if (loyaltyService == null){
+            raiseException(new SDKInitializationException());
+            return false;
+        }
+        final Call<GenericResponse> response = loyaltyService.redeemLoyaltyPoints(customer_id, transaction_value,
+                platform, service_id, meta, tag);
+        try {
+            final GenericResponse body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case -403:
+                        raiseException(new InvalidArgumentsException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    /**
+     * @param transaction_id
+     * @return
+     */
+    public boolean cancelTransaction(String transaction_id) {
+        if (loyaltyService == null){
+            raiseException(new SDKInitializationException());
+            return false;
+        }
+        final Call<GenericResponse> response = loyaltyService.cancel(transaction_id);
+        try {
+            final GenericResponse body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case 404:
+                        raiseException(new ResourceNotFoundException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    /**
+     * @param transaction_id
+     * @return
+     */
+    public boolean refund(String transaction_id){
+        if (loyaltyService == null){
+            raiseException(new SDKInitializationException());
+            return false;
+        }
+        final Call<GenericResponse> response = loyaltyService.refund(transaction_id);
+        try {
+            final GenericResponse body = response.execute().body();
+            if(body != null){
+                switch (body.getCode()) {
+                    case 404:
+                        raiseException(new ResourceNotFoundException(body.getMessage()));
+                        break;
+                    case 400:
+                        raiseException(new SetupIncompleteException(body.getMessage()));
+                        break;
+                    case 200:
+                        return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
 }
