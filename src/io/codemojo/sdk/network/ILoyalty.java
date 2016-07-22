@@ -26,8 +26,8 @@ public interface ILoyalty {
 
     @DELETE("/v1/services/loyalty")
     Call<GenericResponse> redeemLoyaltyPoints(@Query("customer_id") String customer_id, @Query("transaction") float transaction_value,
-                                              @Query("platform") String platform, @Query("service") String service, @Query("meta") String meta,
-                                              @Query("tag") String tag);
+                                              @Query("value") float redemption_value, @Query("transaction_id") String transaction_id, @Query("platform") String platform,
+                                              @Query("service") String service, @Query("meta") String meta, @Query("tag") String tag);
 
     @GET("/v1/services/loyalty/calculate-redemption")
     Call<ResponseLoyaltyMaximumRedemption> maximumRedemption(@Query("customer_id") String customer_id, @Query("transaction") float transaction_value,

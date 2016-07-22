@@ -168,15 +168,14 @@ public class LoyaltyService extends BaseService {
     }
 
     /**
-     * @param customer_id
      * @return
      */
-    public LoyaltySummary getSummary(String customer_id) {
+    public LoyaltySummary getSummary() {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return null;
         }
-        final Call<ResponseLoyaltySummary> response = loyaltyService.summary(customer_id);
+        final Call<ResponseLoyaltySummary> response = loyaltyService.summary(getCustomerId());
         try {
             final ResponseLoyaltySummary body = response.execute().body();
             if(body != null){
@@ -197,14 +196,6 @@ public class LoyaltyService extends BaseService {
     }
 
     /**
-     * @return
-     */
-    public LoyaltySummary getSummary() {
-        return getSummary(getCustomerId());
-    }
-
-    /**
-     * @param customer_id
      * @param transaction_id
      * @param redemption_value
      * @param transaction_value
@@ -212,13 +203,12 @@ public class LoyaltyService extends BaseService {
      * @param tag
      * @return
      */
-    public boolean redeemPoints(String customer_id, String transaction_id, float redemption_value,
+    public boolean redeemPoints(String transaction_id, float redemption_value,
                                         float transaction_value, String meta, String tag) {
-        return redeemPoints(customer_id, transaction_id, redemption_value, transaction_value, null, null, meta, tag);
+        return redeemPoints(transaction_id, redemption_value, transaction_value, null, null, meta, tag);
     }
 
     /**
-     * @param customer_id
      * @param transaction_id
      * @param redemption_value
      * @param transaction_value
@@ -228,18 +218,21 @@ public class LoyaltyService extends BaseService {
      * @param tag
      * @return
      */
-    public boolean redeemPoints(String customer_id, String transaction_id, float redemption_value,
+    public boolean redeemPoints(String transaction_id, float redemption_value,
                                         float transaction_value, String platform, String service_id, String meta, String tag){
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return false;
         }
-        final Call<GenericResponse> response = loyaltyService.redeemLoyaltyPoints(customer_id, transaction_value,
-                platform, service_id, meta, tag);
+        final Call<GenericResponse> response = loyaltyService.redeemLoyaltyPoints(getCustomerId(), transaction_value, redemption_value,
+                transaction_id, platform, service_id, meta, tag);
         try {
             final GenericResponse body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
+                    case 3:
+                        raiseException(new Exception("Insufficient balance"));
+                        break;
                     case -403:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
