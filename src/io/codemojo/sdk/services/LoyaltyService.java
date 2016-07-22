@@ -35,7 +35,6 @@ public class LoyaltyService extends BaseService {
     }
 
     /**
-     * @param customer_id
      * @param transaction
      * @param transaction_id
      * @param meta
@@ -43,12 +42,12 @@ public class LoyaltyService extends BaseService {
      * @param platform
      * @param service
      */
-    public Loyalty addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag, String platform, String service) {
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return null;
         }
-        final Call<ResponseLoyalty> response = loyaltyService.addLoyaltyPoints(customer_id, transaction, transaction_id, meta, tag, platform, service);
+        final Call<ResponseLoyalty> response = loyaltyService.addLoyaltyPoints(getCustomerId(), transaction, transaction_id, meta, tag, platform, service);
         ResponseLoyalty body = null;
         try {
             body = response.execute().body();
@@ -74,45 +73,41 @@ public class LoyaltyService extends BaseService {
     }
 
     /**
-     * @param customer_id
      * @param transaction
      * @param transaction_id
      * @param meta
      * @param tag
      */
-    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id, String meta, String tag) {
-        addLoyaltyPoints(customer_id, transaction, transaction_id, meta, tag, null, null);
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag) {
+        return addLoyaltyPoints(transaction, transaction_id, meta, tag, null, null);
     }
 
     /**
-     * @param customer_id
      * @param transaction
      * @param transaction_id
      */
-    public void addLoyaltyPoints(String customer_id, float transaction, String transaction_id) {
-        addLoyaltyPoints(customer_id, transaction, transaction_id, null, null, null, null);
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id) {
+        return addLoyaltyPoints(transaction, transaction_id, null, null, null, null);
     }
 
     /**
-     * @param customer_id
      * @param transaction
      */
-    public void calculateLoyaltyPoints(String customer_id, float transaction) {
-        calculateLoyaltyPoints(customer_id, transaction, null, null);
+    public float calculateLoyaltyPoints(float transaction) {
+        return calculateLoyaltyPoints(transaction, null, null);
     }
 
     /**
-     * @param customer_id
      * @param transaction
      * @param platform
      * @param service
      */
-    public float calculateLoyaltyPoints(String customer_id, float transaction, String platform, String service) {
+    public float calculateLoyaltyPoints(float transaction, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return 0;
         }
-        final Call<ResponseLoyalty> response = loyaltyService.calculateLoyaltyPoints(customer_id, transaction, platform, service);
+        final Call<ResponseLoyalty> response = loyaltyService.calculateLoyaltyPoints(getCustomerId(), transaction, platform, service);
         try {
             final ResponseLoyalty body = response.execute().body();
             if(body != null){
@@ -134,26 +129,24 @@ public class LoyaltyService extends BaseService {
     }
 
     /**
-     * @param customer_id
      * @param transaction
      */
-    public void maximumRedemption(String customer_id, float transaction) {
-        maximumRedemption(customer_id, transaction);
+    public float maximumRedemption(float transaction) {
+        return maximumRedemption(transaction, null, null);
     }
 
 
     /**
-     * @param customer_id
      * @param transaction
      * @param platform
      * @param service
      */
-    public float maximumRedemption(String customer_id, float transaction, String platform, String service) {
+    public float maximumRedemption(float transaction, String platform, String service) {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return 0;
         }
-        final Call<ResponseLoyaltyMaximumRedemption> response = loyaltyService.maximumRedemption(customer_id, transaction, platform, service);
+        final Call<ResponseLoyaltyMaximumRedemption> response = loyaltyService.maximumRedemption(getCustomerId(), transaction, platform, service);
         try {
             final ResponseLoyaltyMaximumRedemption body = response.execute().body();
             if(body != null){

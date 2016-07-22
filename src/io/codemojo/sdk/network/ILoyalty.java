@@ -29,17 +29,17 @@ public interface ILoyalty {
                                               @Query("platform") String platform, @Query("service") String service, @Query("meta") String meta,
                                               @Query("tag") String tag);
 
-    @GET("/v1/services/loyalty")
+    @GET("/v1/services/loyalty/calculate-redemption")
     Call<ResponseLoyaltyMaximumRedemption> maximumRedemption(@Query("customer_id") String customer_id, @Query("transaction") float transaction_value,
                                                              @Query("platform") String platform, @Query("service") String service);
 
     @GET("/v1/services/loyalty/summary/{customer_id}")
     Call<ResponseLoyaltySummary> summary(@Path("customer_id") String customer_id);
 
-    @DELETE("/v1/services/loyalty/transaction/{transaction_id")
+    @DELETE("/v1/services/loyalty/transaction/{transaction_id}")
     Call<GenericResponse> cancel(@Path("transaction_id") String customer_id);
 
-    @PUT("/v1/services/loyalty/transaction/refund/{transaction_id")
+    @PUT("/v1/services/loyalty/transaction/refund/{transaction_id}")
     Call<GenericResponse> refund(@Path("transaction_id") String customer_id);
 
 }
