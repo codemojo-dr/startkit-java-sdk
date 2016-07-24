@@ -10,6 +10,7 @@ import io.codemojo.sdk.models.WalletTransaction;
 import io.codemojo.sdk.network.IWallet;
 import io.codemojo.sdk.responses.ResponseWalletBalance;
 import io.codemojo.sdk.responses.ResponseWalletTransaction;
+import io.codemojo.sdk.utils.APICodes;
 import retrofit2.Call;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class WalletService extends BaseService implements IPagination<WalletTran
     /**
      * @return WalletBalance
      */
-    public WalletBalance getWalletBalance() {
+    public WalletBalance getWalletBalance() throws Exception {
         if (walletService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -44,13 +45,16 @@ public class WalletService extends BaseService implements IPagination<WalletTran
             final ResponseWalletBalance code  = response.execute().body();
             if(code != null){
                 switch (code.getCode()){
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(code.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(code.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(code.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return code.getBalance();
                 }
             }
@@ -74,7 +78,7 @@ public class WalletService extends BaseService implements IPagination<WalletTran
      * @param page
      * @return PaginatedTransaction<WalletTransaction>
      */
-    private PaginatedTransaction<WalletTransaction> getTransactions(int count, int page){
+    private PaginatedTransaction<WalletTransaction> getTransactions(int count, int page) throws Exception {
         if (walletService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -85,13 +89,16 @@ public class WalletService extends BaseService implements IPagination<WalletTran
             final ResponseWalletTransaction code  = response.execute().body();
             if(code != null){
                 switch (code.getCode()){
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(code.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(code.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(code.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         PaginatedTransaction<WalletTransaction> paginatedTransaction = code.getTransactions();
                         paginatedTransaction.setPaginationHandler(this);
                         return paginatedTransaction;
@@ -115,7 +122,11 @@ public class WalletService extends BaseService implements IPagination<WalletTran
     @Override
     public PaginatedTransaction<WalletTransaction> next() {
         transactionPage++;
-        return getTransactions(count, transactionPage);
+        try {
+            return getTransactions(count, transactionPage);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**

@@ -19,7 +19,10 @@ public abstract class BaseService {
     public BaseService(AuthenticationService authenticationService, Class serviceClass) {
         if (authenticationService == null){
             service = customer_id = null;
-            raiseException(new Exception("Cannot authenticate"));
+            try {
+                raiseException(new Exception("Cannot authenticate"));
+            } catch (Exception ignored) {
+            }
             return;
         }
         this.customer_id = authenticationService.getCustomerId();
@@ -46,10 +49,11 @@ public abstract class BaseService {
         return service;
     }
 
-    protected void raiseException(final Exception e){
+    protected void raiseException(final Exception e) throws Exception {
         if(this.exception == null){
             return;
         }
         exception.onError(e);
+        throw e;
     }
 }

@@ -12,6 +12,7 @@ import io.codemojo.sdk.network.ILoyalty;
 import io.codemojo.sdk.responses.ResponseLoyalty;
 import io.codemojo.sdk.responses.ResponseLoyaltyMaximumRedemption;
 import io.codemojo.sdk.responses.ResponseLoyaltySummary;
+import io.codemojo.sdk.utils.APICodes;
 import retrofit2.Call;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class LoyaltyService extends BaseService {
      * @param platform
      * @param service
      */
-    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag, String platform, String service) {
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag, String platform, String service) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -56,13 +57,16 @@ public class LoyaltyService extends BaseService {
         }
         if(body != null){
             switch (body.getCode()) {
-                case -403:
+                case APICodes.INVALID_MISSING_FIELDS:
                     raiseException(new InvalidArgumentsException(body.getMessage()));
                     break;
-                case 400:
+                case APICodes.SERVICE_NOT_SETUP:
                     raiseException(new SetupIncompleteException(body.getMessage()));
                     break;
-                case 200:
+                case APICodes.RESPONSE_FAILURE:
+                    raiseException(new Exception(body.getMessage()));
+                    break;
+                case APICodes.RESPONSE_SUCCESS:
                     if(notification != null && body.getResult().isTierUpgrade()) {
                         notification.newTierUpgrade(body.getResult().getTier());
                     }
@@ -78,7 +82,7 @@ public class LoyaltyService extends BaseService {
      * @param meta
      * @param tag
      */
-    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag) {
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id, String meta, String tag) throws Exception {
         return addLoyaltyPoints(transaction, transaction_id, meta, tag, null, null);
     }
 
@@ -86,14 +90,14 @@ public class LoyaltyService extends BaseService {
      * @param transaction
      * @param transaction_id
      */
-    public Loyalty addLoyaltyPoints(float transaction, String transaction_id) {
+    public Loyalty addLoyaltyPoints(float transaction, String transaction_id) throws Exception {
         return addLoyaltyPoints(transaction, transaction_id, null, null, null, null);
     }
 
     /**
      * @param transaction
      */
-    public float calculateLoyaltyPoints(float transaction) {
+    public float calculateLoyaltyPoints(float transaction) throws Exception {
         return calculateLoyaltyPoints(transaction, null, null);
     }
 
@@ -102,7 +106,7 @@ public class LoyaltyService extends BaseService {
      * @param platform
      * @param service
      */
-    public float calculateLoyaltyPoints(float transaction, String platform, String service) {
+    public float calculateLoyaltyPoints(float transaction, String platform, String service) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return 0;
@@ -112,17 +116,20 @@ public class LoyaltyService extends BaseService {
             final ResponseLoyalty body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return body.getResult().getAward();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
             raiseException(ignored);
         }
         return 0;
@@ -131,7 +138,7 @@ public class LoyaltyService extends BaseService {
     /**
      * @param transaction
      */
-    public float maximumRedemption(float transaction) {
+    public float maximumRedemption(float transaction) throws Exception {
         return maximumRedemption(transaction, null, null);
     }
 
@@ -141,7 +148,7 @@ public class LoyaltyService extends BaseService {
      * @param platform
      * @param service
      */
-    public float maximumRedemption(float transaction, String platform, String service) {
+    public float maximumRedemption(float transaction, String platform, String service) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return 0;
@@ -151,17 +158,20 @@ public class LoyaltyService extends BaseService {
             final ResponseLoyaltyMaximumRedemption body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return body.getResult();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
             raiseException(ignored);
         }
         return 0;
@@ -170,7 +180,7 @@ public class LoyaltyService extends BaseService {
     /**
      * @return
      */
-    public LoyaltySummary getSummary() {
+    public LoyaltySummary getSummary() throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -180,17 +190,20 @@ public class LoyaltyService extends BaseService {
             final ResponseLoyaltySummary body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return body.getSummary();
                 }
             }
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
         }
         return null;
     }
@@ -204,7 +217,7 @@ public class LoyaltyService extends BaseService {
      * @return
      */
     public boolean redeemPoints(String transaction_id, float redemption_value,
-                                        float transaction_value, String meta, String tag) {
+                                        float transaction_value, String meta, String tag) throws Exception {
         return redeemPoints(transaction_id, redemption_value, transaction_value, null, null, meta, tag);
     }
 
@@ -219,7 +232,7 @@ public class LoyaltyService extends BaseService {
      * @return
      */
     public boolean redeemPoints(String transaction_id, float redemption_value,
-                                        float transaction_value, String platform, String service_id, String meta, String tag){
+                                        float transaction_value, String platform, String service_id, String meta, String tag) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return false;
@@ -230,20 +243,24 @@ public class LoyaltyService extends BaseService {
             final GenericResponse body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case 3:
+                    case APICodes.WALLET_BALANCE_EXHAUSTED:
                         raiseException(new Exception("Insufficient balance"));
                         break;
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.OVERFLOW:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return true;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
         }
         return false;
     }
@@ -252,7 +269,7 @@ public class LoyaltyService extends BaseService {
      * @param transaction_id
      * @return
      */
-    public boolean cancelTransaction(String transaction_id) {
+    public boolean cancelTransaction(String transaction_id) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return false;
@@ -262,17 +279,20 @@ public class LoyaltyService extends BaseService {
             final GenericResponse body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case 404:
+                    case APICodes.RESOURCE_NOT_FOUND:
                         raiseException(new ResourceNotFoundException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return true;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (IOException ignored) {
         }
         return false;
     }
@@ -281,7 +301,7 @@ public class LoyaltyService extends BaseService {
      * @param transaction_id
      * @return
      */
-    public boolean refund(String transaction_id){
+    public boolean refund(String transaction_id) throws Exception {
         if (loyaltyService == null){
             raiseException(new SDKInitializationException());
             return false;
@@ -291,13 +311,16 @@ public class LoyaltyService extends BaseService {
             final GenericResponse body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case 404:
+                    case APICodes.RESOURCE_NOT_FOUND:
                         raiseException(new ResourceNotFoundException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return true;
                 }
             }

@@ -12,6 +12,7 @@ import io.codemojo.sdk.responses.ResponseGamification;
 import io.codemojo.sdk.responses.ResponseGamificationAchievement;
 import io.codemojo.sdk.responses.ResponseGamificationSummary;
 import io.codemojo.sdk.responses.ResponseWalletTransaction;
+import io.codemojo.sdk.utils.APICodes;
 import retrofit2.Call;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class GamificationService extends BaseService implements IPagination<Wall
     /**
      * @param action_id
      */
-    public GamificationStatus captureAction(String action_id) {
+    public GamificationStatus captureAction(String action_id) throws Exception {
         if (gamificationService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -50,18 +51,19 @@ public class GamificationService extends BaseService implements IPagination<Wall
             final ResponseGamification body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 505:
-                    case 404:
-                    case -405:
+                    case APICodes.RESOURCE_NOT_FOUND:
                         raiseException(new ResourceNotFoundException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         if(notification != null && body.getGamificationStatus().isBadgeUpgrade()) {
                             notification.newBadgeUnlocked(body.getGamificationStatus().getCurrentPoints(), body.getGamificationStatus().getBadge());
                         }
@@ -77,7 +79,7 @@ public class GamificationService extends BaseService implements IPagination<Wall
     /**
      * @param action_id
      */
-    public void captureAchievementsAction(String action_id)  {
+    public void captureAchievementsAction(String action_id) throws Exception {
         captureAchievementsAction(action_id, null);
     }
 
@@ -85,7 +87,7 @@ public class GamificationService extends BaseService implements IPagination<Wall
      * @param action_id
      * @param category_id
      */
-    public Map<String, GamificationAchievement> captureAchievementsAction(String action_id, String category_id) {
+    public Map<String, GamificationAchievement> captureAchievementsAction(String action_id, String category_id) throws Exception {
         if (gamificationService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -95,18 +97,19 @@ public class GamificationService extends BaseService implements IPagination<Wall
             final ResponseGamificationAchievement body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 404:
-                    case 505:
-                    case -405:
+                    case APICodes.RESOURCE_NOT_FOUND:
                         raiseException(new ResourceNotFoundException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         if(notification != null) {
                             for (String achievement : body.getAchievements().keySet()) {
                                 if (body.getAchievements().get(achievement).isNewBagdeEarned()) {
@@ -127,7 +130,7 @@ public class GamificationService extends BaseService implements IPagination<Wall
     /**
      * @return
      */
-    public GamificationSummary getUserSummary() {
+    public GamificationSummary getUserSummary() throws Exception {
         if (gamificationService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -138,13 +141,16 @@ public class GamificationService extends BaseService implements IPagination<Wall
             final ResponseGamificationSummary body = response.execute().body();
             if(body != null){
                 switch (body.getCode()) {
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(body.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(body.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(body.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         return body.getSummary();
                 }
             }
@@ -159,7 +165,7 @@ public class GamificationService extends BaseService implements IPagination<Wall
         return next();
     }
 
-    private PaginatedTransaction<WalletTransaction> getTransactions(int count, int page){
+    private PaginatedTransaction<WalletTransaction> getTransactions(int count, int page) throws Exception {
         if (gamificationService == null){
             raiseException(new SDKInitializationException());
             return null;
@@ -170,13 +176,16 @@ public class GamificationService extends BaseService implements IPagination<Wall
             final ResponseWalletTransaction code  = response.execute().body();
             if(code != null){
                 switch (code.getCode()){
-                    case -403:
+                    case APICodes.INVALID_MISSING_FIELDS:
                         raiseException(new InvalidArgumentsException(code.getMessage()));
                         break;
-                    case 400:
+                    case APICodes.SERVICE_NOT_SETUP:
                         raiseException(new SetupIncompleteException(code.getMessage()));
                         break;
-                    case 200:
+                    case APICodes.RESPONSE_FAILURE:
+                        raiseException(new Exception(code.getMessage()));
+                        break;
+                    case APICodes.RESPONSE_SUCCESS:
                         PaginatedTransaction<WalletTransaction> paginatedTransaction = code.getTransactions();
                         paginatedTransaction.setPaginationHandler(this);
                         return paginatedTransaction;
@@ -195,7 +204,11 @@ public class GamificationService extends BaseService implements IPagination<Wall
     @Override
     public PaginatedTransaction<WalletTransaction> next() {
         transactionPage++;
-        return getTransactions(count, transactionPage);
+        try {
+            return getTransactions(count, transactionPage);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override
@@ -204,6 +217,10 @@ public class GamificationService extends BaseService implements IPagination<Wall
         if(transactionPage <= 0){
             transactionPage = 1;
         }
-        return getTransactions(count, transactionPage);
+        try {
+            return getTransactions(count, transactionPage);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
